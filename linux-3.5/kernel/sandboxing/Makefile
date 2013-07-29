@@ -1,0 +1,1 @@
+obj-y += sandbox.o syscalls.o

@@ -1882,3 +1882,111 @@ int unshare_files(struct files_struct **displaced)
 	task_unlock(task);
 	return 0;
 }
+
+/* Sandbox patch 
+
+   i have no choice but to duplicate the do_fork() code, since:
+
+   1) it is tightly coupled with the rest of the kernel, so i
+   cannot add new parameters (cannot change prototype).
+
+   2) since the original do_fork() calls wake_up_new_task()
+   i cannot modify the child task from outside.
+
+   3) i did not task out the duplicated function since 
+   i assume is dependent in symbols defined in fork.c
+
+*/
+long do_fork_into_sandbox(unsigned long clone_flags,
+			  unsigned long stack_start,
+			  struct pt_regs *regs,
+			  unsigned long stack_size,
+			  int __user *parent_tidptr,
+			  int __user *child_tidptr,
+			  unsigned long sandbox_id)
+{
+	struct task_struct *p;
+	int trace = 0;
+	long nr;
+
+	/*
+	 * Do some preliminary argument and permissions checking before we
+	 * actually start allocating stuff
+	 */
+	if (clone_flags & CLONE_NEWUSER) {
+		if (clone_flags & CLONE_THREAD)
+			return -EINVAL;
+		/* hopefully this check will go away when userns support is
+		 * complete
+		 */
+		if (!capable(CAP_SYS_ADMIN) || !capable(CAP_SETUID) ||
+				!capable(CAP_SETGID))
+			return -EPERM;
+	}
+
+	/*
+	 * Determine whether and which event to report to ptracer.  When
+	 * called from kernel_thread or CLONE_UNTRACED is explicitly
+	 * requested, no event is reported; otherwise, report if the event
+	 * for the type of forking is enabled.
+	 */
+	if (likely(user_mode(regs)) && !(clone_flags & CLONE_UNTRACED)) {
+		if (clone_flags & CLONE_VFORK)
+			trace = PTRACE_EVENT_VFORK;
+		else if ((clone_flags & CSIGNAL) != SIGCHLD)
+			trace = PTRACE_EVENT_CLONE;
+		else
+			trace = PTRACE_EVENT_FORK;
+
+		if (likely(!ptrace_event_enabled(current, trace)))
+			trace = 0;
+	}
+
+	p = copy_process(clone_flags, stack_start, regs, stack_size,
+			 child_tidptr, NULL, trace);
+	/*
+	 * Do this prior waking up the new thread - the thread pointer
+	 * might get invalid after that point, if the thread exits quickly.
+	 */
+	if (!IS_ERR(p)) {
+		struct completion vfork;
+
+		trace_sched_process_fork(current, p);
+
+		nr = task_pid_vnr(p);
+
+		if (clone_flags & CLONE_PARENT_SETTID)
+			put_user(nr, parent_tidptr);
+
+		if (clone_flags & CLONE_VFORK) {
+			p->vfork_done = &vfork;
+			init_completion(&vfork);
+			get_task_struct(p);
+		}
+		
+		/* this is the place to edit the child's sandbox data, 
+		   since is has not added to a runqueue yet and copy_process()
+		   produced a valid and runnable task structure.
+		 */
+
+		/* our sandbox hierarchy is of max depth 2 */
+		if ((0 == p->sandbox->sandbox_id) &&
+		    (sandbox_id != p->sandbox->sandbox_id)) {
+		  printk(KERN_ALERT "switching into sandbox %ld\n", sandbox_id);
+		  p->sandbox = limited_sandbox;
+		}
+		wake_up_new_task(p);
+
+		/* forking complete and child started to run, tell ptracer */
+		if (unlikely(trace))
+			ptrace_event(trace, nr);
+
+		if (clone_flags & CLONE_VFORK) {
+			if (!wait_for_vfork_done(p, &vfork))
+				ptrace_event(PTRACE_EVENT_VFORK_DONE, nr);
+		}
+	} else {
+		nr = PTR_ERR(p);
+	}
+	return nr;
+}

@@ -200,6 +200,7 @@ extern struct cred init_cred;
 	INIT_TRACE_RECURSION						\
 	INIT_TASK_RCU_PREEMPT(tsk)					\
 	INIT_CPUSET_SEQ							\
+        INIT_DEFAULT_SANDBOX                                            \
 }
 
 
@@ -209,6 +210,12 @@ extern struct cred init_cred;
 	LIST_HEAD_INIT(cpu_timers[1]),					\
 	LIST_HEAD_INIT(cpu_timers[2]),					\
 }
+
+/* in case sandboxing is enabled (yes by default) */
+/* this macro inits the default sandbox */
+#define INIT_DEFAULT_SANDBOX			\
+	.sandbox = default_sandbox,					
+
 
 /* Attach to the init_task data structure for proper alignment */
 #define __init_task_data __attribute__((__section__(".data..init_task")))
