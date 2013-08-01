@@ -1585,8 +1585,7 @@ struct task_struct {
 	struct uprobe_task *utask;
 	int uprobe_srcu_id;
 #endif
-
-        const struct sandbox_class *sandbox;
+        unsigned long sandbox_id;
 };
 
 /* Future-safe accessor for struct task_struct's cpus_allowed. */
@@ -2315,6 +2314,8 @@ extern int do_execve(const char *,
 		     const char __user * const __user *,
 		     const char __user * const __user *, struct pt_regs *);
 extern long do_fork(unsigned long, unsigned long, struct pt_regs *, unsigned long, int __user *, int __user *);
+extern long do_fork_into_sandbox(unsigned long, unsigned long, struct pt_regs *, 
+				 unsigned long, int __user *, int __user *, unsigned long);
 struct task_struct *fork_idle(int);
 
 extern void set_task_comm(struct task_struct *tsk, char *from);

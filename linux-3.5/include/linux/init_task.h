@@ -213,9 +213,8 @@ extern struct cred init_cred;
 
 /* in case sandboxing is enabled (yes by default) */
 /* this macro inits the default sandbox */
-#define INIT_DEFAULT_SANDBOX			\
-	.sandbox = default_sandbox,					
-
+#define INIT_DEFAULT_SANDBOX \
+        .sandbox_id = 0,
 
 /* Attach to the init_task data structure for proper alignment */
 #define __init_task_data __attribute__((__section__(".data..init_task")))
