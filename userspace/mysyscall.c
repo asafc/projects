@@ -5,16 +5,35 @@
 
 #define SB_FORK (350)
 
+/* getpid */
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <syslog.h>
+
 int main(void) 
 {
+  int prio = LOG_USER | LOG_ALERT;
   int pid = 0;
+  int ppid = 0;
+  pid_t father, child;
   printf("calling sys_fork_into_sandbox...\n");
 
-  pid = (int) syscall(SB_FORK, 7);
+  pid = (int) syscall(SB_FORK, 1);
   if(pid == 0) {
-    printf("Papa!!\n");
+    /* this is the child */
+    syslog(prio, "sandbox: Papa!!\n");
+    father = getppid();
+    syslog(prio, "sandbox: father pid is %d\n", (int) father);
+    child = getpid();
+    syslog(prio, "sandbox: child pid is %d\n", (int) child);
   } else {
-    printf("Gingie!! (num: %d)\n", pid);
+    /* this is the father */
+    syslog(prio, "sandbox: Gingie!! (num: %d)\n", pid);
+    father = getppid();
+    syslog(prio, "sandbox: father pid is %d\n", (int) father);
+    child = getpid();
+    syslog(prio, "sandbox: child pid is %d\n", (int) child);
   }
   return 0;
 }
