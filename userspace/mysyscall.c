@@ -10,7 +10,7 @@ int main(void)
   int pid = 0;
   printf("calling sys_fork_into_sandbox...\n");
 
-  pid = (int) syscall(SB_FORK);
+  pid = (int) syscall(SB_FORK, 7);
   if(pid == 0) {
     printf("Papa!!\n");
   } else {

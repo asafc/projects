@@ -1,12 +1,14 @@
 #ifndef _LINUX_SANDBOX
 #define _LINUX_SANDBOX
 
-
-#define NUM_OF_SYSCALLS 350
-
 #include <linux/kernel.h>
 #include <linux/bitops.h>
 #include <linux/types.h>
+
+#define current_sandbox (sandbox_list[current->sandbox_id])
+
+/* temp */
+#define NUM_OF_SYSCALLS 350
 
 struct sandbox_class {
   /* 
@@ -17,7 +19,9 @@ struct sandbox_class {
   DECLARE_BITMAP(syscalls, NUM_OF_SYSCALLS);
 };
 
+/* exported to the kernel */
 extern struct sandbox_class * sandbox_list;
 extern void init_sandbox_list(void);
+extern asmlinkage int sandbox_block_syscall(int syscall_num);
 
 #endif /* _LINUX_SANDBOX */
