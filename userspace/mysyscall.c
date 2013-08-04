@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
+#define FORK (2)
 #define SB_FORK (350)
 
 /* getpid */
@@ -15,11 +16,11 @@ int main(void)
 {
   int prio = LOG_USER | LOG_ALERT;
   int pid = 0;
-  int ppid = 0;
   pid_t father, child;
   printf("calling sys_fork_into_sandbox...\n");
 
-  pid = (int) syscall(SB_FORK, 1);
+  pid = (int) syscall(SB_FORK, 1); 
+  /* pid = (int) syscall(FORK); */
   if(pid == 0) {
     /* this is the child */
     syslog(prio, "sandbox: Papa!!\n");

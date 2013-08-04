@@ -497,13 +497,6 @@ ENTRY(system_call)
 	cmpl $(NR_syscalls), %eax
 	jae syscall_badsys
 syscall_call:
-					# sandbox patch start
-	pushl %eax			# parameter to sandbox_block_syscall: syscall number
-	call sandbox_block_syscall	# sandbox leech point on syscalls
-	testl %eax, %eax
-	jnz syscall_blocked		# sandbox_block_syscall returned BLOCK_SYSCALL
-	popl %eax			# restore the stack to the way it was before
-					# sandbox patch end
 	call *sys_call_table(,%eax,4)
 	movl %eax,PT_EAX(%esp)		# store the return value
 syscall_exit:
@@ -682,8 +675,6 @@ syscall_fault:
 	jmp resume_userspace
 END(syscall_fault)
 
-syscall_blocked:
-	popl %eax			# restore the stack to the way it was before
 syscall_badsys:
 	movl $-ENOSYS,PT_EAX(%esp)
 	jmp resume_userspace

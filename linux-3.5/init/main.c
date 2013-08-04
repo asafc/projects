@@ -624,6 +624,7 @@ asmlinkage void __init start_kernel(void)
 	cpuset_init();
 	taskstats_init_early();
 	delayacct_init();
+	init_sandbox_list();
 
 	check_bugs();
 

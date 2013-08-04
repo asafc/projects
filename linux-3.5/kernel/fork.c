@@ -1970,11 +1970,11 @@ long do_fork_into_sandbox(unsigned long clone_flags,
 		 */
 
 		/* our sandbox hierarchy is of max depth 2 */
-		if ((0 == p->sandbox_id) && (0 != sandbox_id)) {
-		  printk(KERN_ALERT "switching into sandbox %ld\n", sandbox_id);
-		  p->sandbox_id = sandbox_id;
-		  /* sandbox()->strip_child(p) */
-		}
+		/* if ((0 == p->sandbox_id) && (0 != sandbox_id)) { */
+		/*   printk(KERN_ALERT "switching into sandbox %ld\n", sandbox_id); */
+		/*   p->sandbox_id = sandbox_id; */
+		/*   /\* sandbox()->strip_child(p) *\/ */
+		/* } */
 		wake_up_new_task(p);
 
 		/* forking complete and child started to run, tell ptracer */
